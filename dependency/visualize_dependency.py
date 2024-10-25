@@ -4,6 +4,7 @@ from typing import Dict, List
 import json
 from plantuml import PlantUML
 from os.path import abspath
+import git
 
 
 
@@ -56,12 +57,25 @@ def build_dependency_graph(package_name: str, max_depth: int) -> List[str]:
     add_dependencies(package_name, 1)
     return graph
 
+def get_git_commits():
+    repo_path = '/home/qulive/Desktop/HW/Configuration management/CM-HW-2/.git'
+    repo = git.Repo(repo_path)
+    commits = list(repo.iter_commits())
+    graph = []
+    for commit in commits:
+        graph.append(f"{commit.author.name} --> {commit.hexsha}")
+    return graph
+
 
 def generate_plantuml_script(graph: List[str]) -> str:
     plantuml_script = "@startuml\n"
     for relation in graph:
         s = relation.split()
-        plantuml_script += "\"" f"{s[0]}" + "\"" + f"{s[1]}" + f"{s[2]}" + "\n"
+        if (len(s) == 3):
+            plantuml_script += "\"" f"{s[0]}" + "\"" + f"{s[1]}" + f"{s[2]}" + "\n"
+        else:
+             plantuml_script += "\"" f"{s[0]}" + "\"" + "-->" + f"{s[1]}" + "\n"
+            
     plantuml_script += "@enduml"
     return plantuml_script
 
@@ -95,14 +109,23 @@ def main(config_path: str) -> None:
     
     print(plantuml_script)
 
-    script_path = "/home/qulive/Desktop/HW/Configuration management/confman hw2/2_dz/dependency/dependency_graph.puml"
+    script_path = "/home/qulive/Desktop/HW/Configuration management/CM-HW-2/dependency/dependency_graph.puml"
     save_plantuml_script(plantuml_script, script_path)
 
     visualize_graph(visualizer_path, script_path)
+    
+    commits = generate_plantuml_script(get_git_commits())
+    
+    commits_path = "/home/qulive/Desktop/HW/Configuration management/CM-HW-2/dependency/commits.puml"
+    save_plantuml_script(commits, commits_path)
+    
+    visualize_graph(visualizer_path, commits_path)
+    
+    
     
     
 
 
 if __name__ == "__main__":
-    config_path = "/home/qulive/Desktop/HW/Configuration management/confman hw2/2_dz/dependency/config.json" # Path to your XML config file
+    config_path = "/home/qulive/Desktop/HW/Configuration management/CM-HW-2/dependency/config.json" # Path to your XML config file
     main(config_path)
